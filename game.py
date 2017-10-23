@@ -44,9 +44,6 @@ pad_body.fixedRotation = True
 pygame.key.set_repeat(1000/TARGET_FPS, 1000/TARGET_FPS)
 
 balls = []
-for i in range(NUMBER_OF_BALLS):
-  balls.append(world.CreateDynamicBody(position=(WIDTH/(PPM*2) - 1 + 2*random(), HEIGHT/(PPM*1.1))))
-  balls[i].CreateCircleFixture(radius=BALL_RADIUS, restitution=0.9)
 
 def draw():
   for ball in balls:
@@ -76,30 +73,45 @@ def do_nothing():
 
 def tick(render=True, learn=False):
   global frames
+
   for ball in balls:
     if ball.position[1] < -BALL_RADIUS:
       return False
 
-    frames += 1
+  frames += 1
 
-    if render:
-      screen.fill((0, 0, 0, 255))
-      draw()
-      screen.blit(font.render(str(frames/60), 1, (255, 255, 255)), (0, 0))
-      pygame.display.flip()
+  if render:
+    screen.fill((0, 0, 0, 255))
+    draw()
+    screen.blit(font.render(str(frames/60), 1, (255, 255, 255)), (0, 0))
+    pygame.display.flip()
 
-    world.Step(TIME_STEP, 10, 10)
+  world.Step(TIME_STEP, 10, 10)
 
-    clock.tick(TARGET_FPS)
+  clock.tick(TARGET_FPS)
 
-    return True
+  return True
 
-def human_play(render=True, inp=True):
+def init_game(n_balls=2):
+  for i in range(NUMBER_OF_BALLS):
+    balls.append(world.CreateDynamicBody(position=(WIDTH/(PPM*2) - 1 + 2*random(), HEIGHT/(PPM*1.1))))
+    balls[i].CreateCircleFixture(radius=BALL_RADIUS, restitution=0.9)
+    balls[i].linearVelocity = (-1 + 2*random(), -1 + 2*random())
+ 
+def restart():
+  global frames, balls
+  frames = 0
+  for ball in balls:
+    ball.position = (WIDTH/(PPM*2) - 1 + 2*random(), HEIGHT/(PPM*1.1))
+    ball.linearVelocity = (-1 + 2*random(), -1 + 2*random())
+
+def human_play():
   while tick(render=True):#Totally makes sense
     get_input()
 
-  pygame.quit()
   print("SCORE: ", frames/60)
+  restart()
+  human_play()
 
 def get_input():
   pad_body.linearVelocity = (0, 0)
@@ -112,4 +124,5 @@ def get_input():
 
 
 if __name__ == "__main__":
+  init_game(n_balls=2)
   human_play()
