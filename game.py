@@ -31,9 +31,7 @@ pygame.display.set_caption("SuperKoolt spel")
 clock = pygame.time.Clock()
 
 world = b2d.world(gravity=(0, -GRAVITY), doSleep=True)
-#world = b2d.world(gravity=(0, 0), doSleep=True)
 
-#ground_body = world.CreateStaticBody(position=(0, 0), shapes=b2d.polygonShape(box=(100, -0.01)))
 world.CreateStaticBody(position=(0, 0), shapes=b2d.polygonShape(box=(0.01, 100)))#Left wall
 world.CreateStaticBody(position=(float(WIDTH/PPM), 0), shapes=b2d.polygonShape(box=(0.01, 100))) #Right wall
 world.CreateStaticBody(position=(0, float(HEIGHT/PPM)), shapes=b2d.polygonShape(box=(100, 0.01)))#Roof
