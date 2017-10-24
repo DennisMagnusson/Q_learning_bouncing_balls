@@ -71,12 +71,24 @@ def move_right():
 def do_nothing():
   pad_body.linearVelocity = (0, 0)
 
+def get_state():
+  a = []
+  for ball in balls:
+    a.append(ball.position[0]*PPM)
+    a.append(ball.position[1]*PPM)
+    a.append(ball.linearVelocity[0])
+    a.append(ball.linearVelocity[1])
+  
+  a.append(pad.position[0]*PPM)
+  return a
+
+
 def tick(render=True, learn=False):
   global frames
 
   for ball in balls:
     if ball.position[1] < -BALL_RADIUS:
-      return False
+      return False if not learn else [[], -1]
 
   frames += 1
 
@@ -89,7 +101,8 @@ def tick(render=True, learn=False):
   world.Step(TIME_STEP, 10, 10)
 
   clock.tick(TARGET_FPS)
-
+  if learn:
+    return [get_state(), 1]
   return True
 
 def init_game(n_balls=2):
