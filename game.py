@@ -9,7 +9,7 @@ import Box2D.b2 as b2d
 
 #Deifnin' some sweet constants
 PPM = 100.0 #Pixels per meter.
-TARGET_FPS = 60
+TARGET_FPS = 10
 TIME_STEP = 1.0 / TARGET_FPS
 WIDTH, HEIGHT = 640, 480
 GRAVITY = 9.81
@@ -19,8 +19,8 @@ VELOCITY = 1500 / PPM
 BALL_RADIUS = 0.15
 PAD_RADIUS = 5
 
-NUMBER_OF_BALLS = 2
 
+n_balls = -1
 frames = 0
 
 pygame.init()
@@ -105,8 +105,10 @@ def tick(render=True, learn=False):
     return [get_state(), 1]
   return True
 
-def init_game(n_balls=2):
-  for i in range(NUMBER_OF_BALLS):
+def init_game(number_of_balls=2):
+  global n_balls
+  n_balls = number_of_balls
+  for i in range(n_balls):
     balls.append(world.CreateDynamicBody(position=(WIDTH/(PPM*2) - 1 + 2*random(), HEIGHT/(PPM*1.1))))
     balls[i].CreateCircleFixture(radius=BALL_RADIUS, restitution=0.9)
     balls[i].linearVelocity = (-1 + 2*random(), -1 + 2*random())
@@ -137,5 +139,5 @@ def get_input():
 
 
 if __name__ == "__main__":
-  init_game(n_balls=2)
+  init_game(number_of_balls=2)
   human_play()
