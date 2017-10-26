@@ -9,7 +9,7 @@ import Box2D.b2 as b2d
 
 #Deifnin' some sweet constants
 PPM = 100.0 #Pixels per meter.
-TARGET_FPS = 10
+TARGET_FPS = 30
 TIME_STEP = 1.0 / TARGET_FPS
 WIDTH, HEIGHT = 640, 480
 GRAVITY = 9.81
@@ -95,7 +95,7 @@ def tick(render=True, learn=False):
   if render:
     screen.fill((0, 0, 0, 255))
     draw()
-    screen.blit(font.render(str(frames/60), 1, (255, 255, 255)), (0, 0))
+    screen.blit(font.render(str(frames/30), 1, (255, 255, 255)), (0, 0))
     pygame.display.flip()
 
   world.Step(TIME_STEP, 10, 10)
@@ -124,7 +124,7 @@ def human_play():
   while tick(render=True):#Totally makes sense
     get_input()
 
-  print("SCORE: ", frames/60)
+  print("SCORE: ", frames/30)
   restart()
   human_play()
 
