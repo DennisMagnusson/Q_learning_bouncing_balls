@@ -3,6 +3,7 @@ from __future__ import print_function
 import pygame
 from pygame.locals import *
 from random import random
+import math
 
 import Box2D
 import Box2D.b2 as b2d
@@ -79,16 +80,22 @@ def get_state():
     a.append(ball.linearVelocity[0])
     a.append(ball.linearVelocity[1])
   
-  a.append(pad.position[0]*PPM)
+  a.append(pad_body.position[0]*PPM)
   return a
 
 
 def tick(render=True, learn=False):
   global frames
 
+  reward = 0
   for ball in balls:
+    dx = ball.position[0] - pad_body.position[0]
+    dy = ball.position[1] - pad_body.position[1]
     if ball.position[1] < -BALL_RADIUS:
       return False if not learn else [[], -1]
+      #Increase reward if ball is pretty close to the pad
+    elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 3*BALL_RADIUS:
+      reward += 1
 
   frames += 1
 
@@ -100,9 +107,11 @@ def tick(render=True, learn=False):
 
   world.Step(TIME_STEP, 10, 10)
 
+  print(reward)
+
   clock.tick(TARGET_FPS)
   if learn:
-    return [get_state(), 1]
+    return [get_state(), reward]
   return True
 
 def init_game(number_of_balls=2):
