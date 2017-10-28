@@ -10,7 +10,7 @@ import Box2D.b2 as b2d
 
 #Deifnin' some sweet constants
 PPM = 100.0 #Pixels per meter.
-TARGET_FPS = 30
+TARGET_FPS = 60
 TIME_STEP = 1.0 / TARGET_FPS
 WIDTH, HEIGHT = 640, 480
 GRAVITY = 9.81
@@ -64,10 +64,16 @@ def draw_ground():
     pygame.draw.polygon(screen, (0, 0, 255, 255), vertices)
 
 def move_left():
-  pad_body.linearVelocity = (-VELOCITY, 0)
+  if pad_body.position[0] > 0:
+    pad_body.linearVelocity = (-VELOCITY, 0)
+  else:
+    do_nothing()
 
 def move_right():
-  pad_body.linearVelocity = (VELOCITY, 0)
+  if pad_body.position[0] < WIDTH/PPM:
+    pad_body.linearVelocity = (VELOCITY, 0)
+  else:
+    do_nothing()
 
 def do_nothing():
   pad_body.linearVelocity = (0, 0)
@@ -107,8 +113,6 @@ def tick(render=True, learn=False):
 
   world.Step(TIME_STEP, 10, 10)
 
-  print(reward)
-
   clock.tick(TARGET_FPS)
   if learn:
     return [get_state(), reward]
@@ -123,11 +127,17 @@ def init_game(number_of_balls=2):
     balls[i].linearVelocity = (-1 + 2*random(), -1 + 2*random())
  
 def restart():
-  global frames, balls
+  global frames, balls, pad_body
   frames = 0
   for ball in balls:
     ball.position = (WIDTH/(PPM*2) - 1 + 2*random(), HEIGHT/(PPM*1.1))
     ball.linearVelocity = (-1 + 2*random(), -1 + 2*random())
+  
+  #Move the pad to the middle
+  #No idea why I have to divide by 2
+  #Also this is the shittiest hack ever
+  pad_body.linearVelocity[0] = ((WIDTH / (2*PPM)) - pad_body.position[0]) * TARGET_FPS/2.0
+  world.Step(TIME_STEP, 10, 10)
 
 def human_play():
   while tick(render=True):#Totally makes sense
@@ -142,9 +152,9 @@ def get_input():
   for event in pygame.event.get():
     if event.type == KEYDOWN:
       if event.key == K_a:
-        pad_body.linearVelocity = (-VELOCITY, 0)
+        move_left()
       elif event.key == K_d:
-        pad_body.linearVelocity = (VELOCITY, 0)
+        move_right()
 
 
 if __name__ == "__main__":

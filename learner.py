@@ -5,11 +5,11 @@ import game
 import numpy as np
 
 ###Constants
-X_POS_BUCKETS = 6
+X_POS_BUCKETS = 3#Have this compared to the pad? LEFT or RIGHT?
 Y_POS_BUCKETS = 4
-X_VEL_BUCKETS = 4
-Y_VEL_BUCKETS = 4#Change this to 2? Or maybe 3. Negative, positive and near-zero?
-PAD_POS_BUCKETS = 6
+X_VEL_BUCKETS = 2
+Y_VEL_BUCKETS = 3#Change this to 2? Or maybe 3. Negative, positive and near-zero?
+PAD_POS_BUCKETS = 3
 
 NUM_ACTIONS = 3#Left right nothing
 
@@ -38,13 +38,20 @@ def train(eps):
   for e in range(eps):
     state, reward = game.tick(render=True, learn=True)
     while True:
+      if state == []:#Game over, man
+        #UPDATE Q with negative reward
+        break#FIXME DELETEME
       state = to_buckets(state)
+      #print(len(state))
+      #print(q_table[0,0,0,0,0].shape)#Should be equivalent to q_table[state], but isn't
       #print(state.shape())
-      print(q_table.shape())
-      print(q_table[state].shape())
+      print("q_table.shape: ", q_table.shape)
+      #print(q_table[state])
+      print(q_table[tuple(state)].shape)
       #TODO Convert state to tuple
-      action = np.argmax(q_table[state])
-      actions[actions]()
+      action = np.argmax(q_table[tuple(state)])
+      print(action)
+      actions[action]()
       state, reward = game.tick(render=True, learn=True)
       #q_table[state, action] = #The equation
 
@@ -53,16 +60,15 @@ def train(eps):
         #break
     #TODO Action
 
-def get_max_q(state):
- options = q_table[to_tuple(state)]#Don't know how to do to tuple, but I'll fix it later.
- print(max(options))
- return np.argmax(options)
-
 def init_ai():
   global q_table
-  NUM_BUCKETS = [PAD_POS_BUCKETS, game.n_balls*[X_POS_BUCKETS, Y_POS_BUCKETS, X_VEL_BUCKETS, Y_VEL_BUCKETS]]
-  #Very shitty hack
-  q_table = np.random.normal(np.zeros(NUM_BUCKETS.append(NUM_ACTIONS)))-0.5#Center at 0
+  n_buckets = [PAD_POS_BUCKETS]
+  for i in range(game.n_balls):
+    n_buckets.append(X_POS_BUCKETS)
+    n_buckets.append(Y_POS_BUCKETS)
+    n_buckets.append(X_VEL_BUCKETS)
+    n_buckets.append(Y_VEL_BUCKETS)
+  q_table = np.random.random_sample(n_buckets + [NUM_ACTIONS])-0.5#Center at 0
 
 
 if __name__ == "__main__":
