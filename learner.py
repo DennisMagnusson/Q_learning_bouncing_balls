@@ -42,22 +42,11 @@ def train(eps):
         #UPDATE Q with negative reward
         break#FIXME DELETEME
       state = to_buckets(state)
-      #print(len(state))
-      #print(q_table[0,0,0,0,0].shape)#Should be equivalent to q_table[state], but isn't
-      #print(state.shape())
-      print("q_table.shape: ", q_table.shape)
-      #print(q_table[state])
-      print(q_table[tuple(state)].shape)
-      #TODO Convert state to tuple
       action = np.argmax(q_table[tuple(state)])
-      print(action)
       actions[action]()
       state, reward = game.tick(render=True, learn=True)
       #q_table[state, action] = #The equation
 
-      #if reward == -1:
-        ##TODO Do some shit and modify weights or whatever
-        #break
     #TODO Action
 
 def init_ai():
