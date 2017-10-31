@@ -5,10 +5,10 @@ import game
 import numpy as np
 
 ###Constants
-X_POS_BUCKETS = 3#Have this compared to the pad? LEFT or RIGHT?
-Y_POS_BUCKETS = 4
+X_POS_BUCKETS = 3
+Y_POS_BUCKETS = 2
 X_VEL_BUCKETS = 2
-Y_VEL_BUCKETS = 3#Change this to 2? Or maybe 3. Negative, positive and near-zero?
+Y_VEL_BUCKETS = 3
 PAD_POS_BUCKETS = 3
 
 NUM_ACTIONS = 3#Left right nothing
@@ -20,43 +20,80 @@ q_table = ()
 
 actions = [game.move_left, game.move_right, game.do_nothing]
 
-def to_buckets(state):
-  buckets = []
-  buckets.append(int(state.pop() / (game.WIDTH * PAD_POS_BUCKETS)))
-  #TODO Order after y-position or something in order to reduce possible dimensions.
-  for i in range(0, len(state), 4):
-    buckets.append(int(state.pop() / (game.WIDTH  * X_POS_BUCKETS)))
-    buckets.append(int(state.pop() / (game.HEIGHT * Y_POS_BUCKETS)))
-    buckets.append(int(state.pop() / (game.WIDTH  * X_VEL_BUCKETS)))
-    buckets.append(int(state.pop() / (game.HEIGHT * Y_VEL_BUCKETS)))
-  
-  print(buckets)
-  return buckets
-  
-
-def train(eps):
+def train(eps, speed=1):
   for e in range(eps):
-    state, reward = game.tick(render=True, learn=True)
+    game.restart()
+    state, reward = game.tick(render=True, learn=True, speed=speed)
+    action = 2#Do nothing on the first move.
+    prev_state = to_buckets(state)
     while True:
-      if state == []:#Game over, man
-        #UPDATE Q with negative reward
-        break#FIXME DELETEME
+      state, reward = game.tick(render=True, learn=True, speed=speed)
       state = to_buckets(state)
+      update_q(state, prev_state, action, reward)
+
+      if reward <= -1:#Game over, man
+        break
+
       action = np.argmax(q_table[tuple(state)])
       actions[action]()
-      state, reward = game.tick(render=True, learn=True)
-      #q_table[state, action] = #The equation
+      prev_state = state
 
-    #TODO Action
+
+#Update Q table
+#Q(state_t, action_t) += lr*(reward + discount*maxQ_a(state_t+1, a) - Q(state_t, action_t)
+#Where t is when the simulation was done and t+1 is after the simulation
+def update_q(state, prev_state, action, reward):
+  global q_table
+  prev_q_index = tuple(prev_state) + tuple([action])
+  best_q_index = tuple(state) + tuple([np.argmax(q_table[tuple(state)])])
+  q_table[prev_q_index] += lr*(reward + discount*q_table[best_q_index] - q_table[prev_q_index])
+
+def to_buckets(state):
+  buckets = []
+  pad_x = state.pop()
+  #Fix some errors
+  if pad_x > game.WIDTH:
+    pad_x = game.WIDTH - 1
+  if pad_x < 0:
+    pad_x = 1
+  #buckets.append(int(state.pop() / (game.WIDTH * PAD_POS_BUCKETS)))
+  buckets.append(int(pad_x * PAD_POS_BUCKETS / game.WIDTH))
+  #Also, fix the velocity things
+  for i in range(0, len(state), 4):
+    y_vel = state.pop()
+    if abs(y_vel) < 0.5:
+      buckets.append(0)
+    elif y_vel < 0:
+      buckets.append(1)
+    else:
+      buckets.append(2)
+    #X velocity
+    buckets.append(1 if (state.pop() > 0) else 0)
+
+    buckets.append(int(state.pop() * Y_POS_BUCKETS / game.HEIGHT))
+
+    ball_x = state.pop()
+    if abs(ball_x - pad_x) < 150:
+      buckets.append(0)
+    elif ball_x < pad_x:
+      buckets.append(1)
+    else:
+      buckets.append(2)
+
+    #buckets.append(int(state.pop() * X_POS_BUCKETS / game.WIDTH))
+  
+  return buckets
+
 
 def init_ai():
   global q_table
+
   n_buckets = [PAD_POS_BUCKETS]
   for i in range(game.n_balls):
-    n_buckets.append(X_POS_BUCKETS)
-    n_buckets.append(Y_POS_BUCKETS)
-    n_buckets.append(X_VEL_BUCKETS)
     n_buckets.append(Y_VEL_BUCKETS)
+    n_buckets.append(X_VEL_BUCKETS)
+    n_buckets.append(Y_POS_BUCKETS)
+    n_buckets.append(X_POS_BUCKETS)
   q_table = np.random.random_sample(n_buckets + [NUM_ACTIONS])-0.5#Center at 0
 
 
@@ -66,4 +103,4 @@ if __name__ == "__main__":
     sys.exit()
   game.init_game(int(sys.argv[1]))
   init_ai()
-  train(10)
+  train(100, speed=int(sys.argv[2]))

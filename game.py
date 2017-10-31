@@ -90,28 +90,30 @@ def get_state():
   return a
 
 
-def tick(render=True, learn=False):
+def tick(render=True, learn=False, speed=1):
   global frames
 
+  #reward = -0.02
   reward = 0
   for ball in balls:
     dx = ball.position[0] - pad_body.position[0]
     dy = ball.position[1] - pad_body.position[1]
     if ball.position[1] < -BALL_RADIUS:
-      return False if not learn else [[], -1]
+      print("SCORE: ", frames/60)
+      return False if not learn else [get_state(), -10]
       #Increase reward if ball is pretty close to the pad
     elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 3*BALL_RADIUS:
       reward += 1
 
-  frames += 1
+  frames += speed
 
   if render:
     screen.fill((0, 0, 0, 255))
     draw()
-    screen.blit(font.render(str(frames/30), 1, (255, 255, 255)), (0, 0))
+    screen.blit(font.render(str(frames/60), 1, (255, 255, 255)), (0, 0))
     pygame.display.flip()
 
-  world.Step(TIME_STEP, 10, 10)
+  world.Step(speed* TIME_STEP, 10, 10)
 
   clock.tick(TARGET_FPS)
   if learn:
@@ -138,12 +140,13 @@ def restart():
   #Also this is the shittiest hack ever
   pad_body.linearVelocity[0] = ((WIDTH / (2*PPM)) - pad_body.position[0]) * TARGET_FPS/2.0
   world.Step(TIME_STEP, 10, 10)
+  pad_body.linearVelocity[0] = 0
+
 
 def human_play():
   while tick(render=True):#Totally makes sense
     get_input()
 
-  print("SCORE: ", frames/30)
   restart()
   human_play()
 
