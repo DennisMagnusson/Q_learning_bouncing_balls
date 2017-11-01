@@ -20,7 +20,6 @@ VELOCITY = 1500 / PPM
 BALL_RADIUS = 0.15
 PAD_RADIUS = 5
 
-
 n_balls = -1
 frames = 0
 
@@ -42,7 +41,7 @@ pad_body = world.CreateKinematicBody(position=(WIDTH/(PPM*2), 0.3 - PAD_RADIUS),
 pad_body.mass = 10000
 pad_body.fixedRotation = True
 
-pygame.key.set_repeat(1000/TARGET_FPS, 1000/TARGET_FPS)
+pygame.key.set_repeat(10, 10)
 
 balls = []
 
@@ -157,7 +156,6 @@ def get_input():
         move_left()
       elif event.key == K_d:
         move_right()
-
 
 if __name__ == "__main__":
   init_game(number_of_balls=2)
