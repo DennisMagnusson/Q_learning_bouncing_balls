@@ -35,7 +35,7 @@ world = b2d.world(gravity=(0, -GRAVITY), doSleep=True)
 
 world.CreateStaticBody(position=(0, 0), shapes=b2d.polygonShape(box=(0.01, 100)))#Left wall
 world.CreateStaticBody(position=(float(WIDTH/PPM), 0), shapes=b2d.polygonShape(box=(0.01, 100))) #Right wall
-world.CreateStaticBody(position=(0, float(HEIGHT/PPM)), shapes=b2d.polygonShape(box=(100, 0.01)))#Roof
+world.CreateStaticBody(position=(0, float(HEIGHT/PPM)), shapes=b2d.polygonShape(box=(100, 0.01)))#Ceiling
 
 pad_body = world.CreateKinematicBody(position=(WIDTH/(PPM*2), 0.3 - PAD_RADIUS), 
                                      shapes=b2d.circleShape(radius=PAD_RADIUS))
