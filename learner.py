@@ -13,8 +13,8 @@ PAD_POS_BUCKETS = 1
 
 NUM_ACTIONS = 3#Left right nothing
 
-lr = 0.2
-discount = 0.3
+lr = 0.1
+discount = 0.8
 
 q_table = ()
 
@@ -58,20 +58,16 @@ def to_buckets(state):
   if pad_x < 0:
     pad_x = 1
 
-  #buckets.append(int(state.pop() / (game.WIDTH * PAD_POS_BUCKETS)))
   buckets.append(int(pad_x * PAD_POS_BUCKETS / game.WIDTH))
-  #TODO Order by y position or y velocity?
-  #Also, fix the velocity things
   for i in range(0, len(state), 4):
     y_vel = state.pop()
-    if abs(y_vel) < 0.5:
+    if abs(y_vel) < 0.2:
       buckets.append(0)
     elif y_vel < 0:
       buckets.append(1)
     else:
       buckets.append(2)
     #X velocity (ignored)
-    #buckets.append(1 if (state.pop() > 0) else 0)
     state.pop()
     buckets.append(0)
 

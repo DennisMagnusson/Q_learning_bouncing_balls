@@ -15,7 +15,7 @@ TIME_STEP = 1.0 / TARGET_FPS
 WIDTH, HEIGHT = 640, 480
 GRAVITY = 9.81
 
-VELOCITY = 1500 / PPM
+VELOCITY = 750 / PPM
 
 BALL_RADIUS = 0.15
 PAD_RADIUS = 5
@@ -96,7 +96,6 @@ def get_state():
           a[i*4 + k] = a[j*4 + k]
           a[j*4 + k] = tmp
   
-  print(a[1], a[5])
   return a
 
 
