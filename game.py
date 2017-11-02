@@ -84,8 +84,19 @@ def get_state():
     a.append(ball.position[1]*PPM)
     a.append(ball.linearVelocity[0])
     a.append(ball.linearVelocity[1])
-  
+ 
   a.append(pad_body.position[0]*PPM)
+  
+  #Bubble sort balls after y position
+  for i in range(n_balls):
+    for j in range(i+1, n_balls):
+      if balls[i].position[1] > balls[j].position[1]:
+        for k in range(4):
+          tmp = a[i*4 + k]
+          a[i*4 + k] = a[j*4 + k]
+          a[j*4 + k] = tmp
+  
+  print(a[1], a[5])
   return a
 
 
