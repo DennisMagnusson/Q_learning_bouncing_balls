@@ -8,7 +8,7 @@ import math
 import Box2D
 import Box2D.b2 as b2d
 
-#Deifnin' some sweet constants
+###Constants
 PPM = 100.0 #Pixels per meter.
 TARGET_FPS = 60
 TIME_STEP = 1.0 / TARGET_FPS
