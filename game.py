@@ -3,7 +3,7 @@ from __future__ import print_function
 import pygame
 from pygame.locals import *
 from random import random
-import math
+import sys, math
 
 import Box2D
 import Box2D.b2 as b2d
@@ -15,7 +15,7 @@ TIME_STEP = 1.0 / TARGET_FPS
 WIDTH, HEIGHT = 640, 480
 GRAVITY = 9.81
 
-VELOCITY = 1500 / PPM
+VELOCITY = 750 / PPM
 
 BALL_RADIUS = 0.15
 PAD_RADIUS = 5
@@ -158,5 +158,5 @@ def get_input():
         move_right()
 
 if __name__ == "__main__":
-  init_game(number_of_balls=2)
+  init_game(number_of_balls=int(sys.argv[1]))
   human_play()
