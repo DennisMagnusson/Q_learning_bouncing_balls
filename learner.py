@@ -5,7 +5,7 @@ import game
 import numpy as np
 
 ###Constants
-X_POS_BUCKETS = 3
+X_POS_BUCKETS = 4
 Y_POS_BUCKETS = 1
 X_VEL_BUCKETS = 1
 Y_VEL_BUCKETS = 3
@@ -13,8 +13,8 @@ PAD_POS_BUCKETS = 1
 
 NUM_ACTIONS = 3#Left right nothing
 
-lr = 0.2
-discount = 0.3
+lr = 0.1
+discount = 0.8
 
 q_table = ()
 
@@ -51,27 +51,22 @@ def update_q(state, prev_state, action, reward):
 def to_buckets(state):
   buckets = []
   pad_x = state.pop()
-
   #Fix some errors
   if pad_x > game.WIDTH:
     pad_x = game.WIDTH - 1
   if pad_x < 0:
     pad_x = 1
 
-  #buckets.append(int(state.pop() / (game.WIDTH * PAD_POS_BUCKETS)))
   buckets.append(int(pad_x * PAD_POS_BUCKETS / game.WIDTH))
-  #TODO Order by y position or y velocity?
-  #Also, fix the velocity things
   for i in range(0, len(state), 4):
     y_vel = state.pop()
-    if abs(y_vel) < 0.5:
+    if abs(y_vel) < 0.2:
       buckets.append(0)
     elif y_vel < 0:
       buckets.append(1)
     else:
       buckets.append(2)
     #X velocity (ignored)
-    #buckets.append(1 if (state.pop() > 0) else 0)
     state.pop()
     buckets.append(0)
 
@@ -79,13 +74,15 @@ def to_buckets(state):
 
     ball_x = state.pop()
     if abs(ball_x - pad_x) < 170:#If ball is above pad
-      buckets.append(0)
+      if ball_x < pad_x:
+        buckets.append(0)
+      else:
+        buckets.append(3)
     elif ball_x < pad_x:
       buckets.append(1)
     else:
       buckets.append(2)
 
-    #buckets.append(int(state.pop() * X_POS_BUCKETS / game.WIDTH))
   
   return buckets
 
@@ -108,4 +105,4 @@ if __name__ == "__main__":
     sys.exit()
   game.init_game(int(sys.argv[1]))
   init_ai()
-  train(100, speed=int(sys.argv[2]))
+  train(1000, speed=int(sys.argv[2]))
