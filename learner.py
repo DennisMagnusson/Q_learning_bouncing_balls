@@ -1,6 +1,9 @@
-from __future__ import print_function
+from __future__ import print_function, division
 import sys, math
 import game
+from keras.models import Sequential
+from keras.layers import Dense, Activation
+import keras.optimizers
 
 import numpy as np
 
@@ -20,24 +23,46 @@ q_table = ()
 
 actions = [game.move_left, game.move_right, game.do_nothing]
 
-def train(eps, speed=1):
+def train(model, eps=1000, speed=1):
+  #TODO Input needs to be normalized FIXME XXX
+  #TODO How to normalize the velocity?
+
   for e in range(eps):
     game.restart()
-    state, reward = game.tick(render=True, learn=True, speed=speed)
+    prev_state, reward = game.tick(render=True, learn=True, speed=speed)
     action = 2#Do nothing on the first move.
-    prev_state = to_buckets(state)
     while True:
       state, reward = game.tick(render=True, learn=True, speed=speed)
-      state = to_buckets(state)
-      update_q(state, prev_state, action, reward)
+      state = normalize(state)
+      #if action == 2:#TODO Update this in some way
+        #reward -= 0.91
+      #else:
+      #reward -= 0.75
+
+      action = reinforce(state, prev_state, action, reward)
 
       if reward <= -1:#Game over, man
         break
 
-      action = np.argmax(q_table[tuple(state)])
+      #action = np.argmax(q_table[tuple(state)])
       actions[action]()
       prev_state = state
 
+#TODO Use the X pos in relation to the pad
+#TODO Maybe try to keep values between -1 and 1 FIXME XXX
+def normalize(state):
+  #Shitty code incoming
+  l = []
+  
+  l.append(state.pop() / 640)
+
+  for i in range(0, len(state), 4):
+    l.append(state.pop() / 10)
+    l.append(state.pop() / 10)
+    l.append(state.pop() / 480)
+    l.append(state.pop() / 640)
+
+  return l
 
 #Update Q table
 #Q(state_t, action_t) += lr*(reward + discount*maxQ_a(state_t+1, a) - Q(state_t, action_t)
@@ -47,6 +72,19 @@ def update_q(state, prev_state, action, reward):
   prev_q_index = tuple(prev_state) + tuple([action])
   best_q_index = tuple(state) + tuple([np.argmax(q_table[tuple(state)])])
   q_table[prev_q_index] += lr*(reward + discount*q_table[best_q_index] - q_table[prev_q_index])
+
+
+#I think this is the correct way of doing it
+def reinforce(state, prev_state, action, reward):
+  expected_reward = model.predict(np.array([prev_state]))
+  print(np.argmax([expected_reward]))
+  print(expected_reward[0])#TODO Check this
+  #action -= 1
+  expected_reward[0][action] = reward + discount * np.argmax(model.predict(np.array([state])))
+  print(expected_reward[0])
+  
+  model.fit(np.array([state]), expected_reward, epochs=1, verbose=0)
+  return np.argmax(expected_reward)
 
 def to_buckets(state):
   buckets = []
@@ -87,6 +125,27 @@ def to_buckets(state):
   return buckets
 
 
+#TODO Change to Tensorflow?
+#TODO The model is trained with the expected rewards and the actual reward of the action + the next (current) reward times the discount. so expected_reward = model.predict(state)
+
+#expected_reward[action] += reward * discount , I think
+#TODO The action is the argmax of the output.
+
+def create_model(input_size):
+  model = Sequential()
+  model.add(Dense(30, input_dim=input_size))
+  model.add(Activation("sigmoid"))
+  model.add(Dense(20))
+  model.add(Activation("sigmoid"))
+  model.add(Dense(10))
+  model.add(Activation("sigmoid"))
+  model.add(Dense(len(actions)))
+  
+  #TODO set the learning rate
+  model.compile(loss='mse', optimizer=keras.optimizers.adam(lr=lr))#TODO Change to logloss?
+
+  return model
+
 def init_ai():
   global q_table
 
@@ -104,5 +163,5 @@ if __name__ == "__main__":
     print("Please specify number of balls")
     sys.exit()
   game.init_game(int(sys.argv[1]))
-  init_ai()
-  train(1000, speed=int(sys.argv[2]))
+  model = create_model(1+4*int(sys.argv[1]))
+  train(model, eps=1000, speed=int(sys.argv[2]))

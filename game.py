@@ -95,14 +95,15 @@ def get_state():
           tmp = a[i*4 + k]
           a[i*4 + k] = a[j*4 + k]
           a[j*4 + k] = tmp
-  
+
+  #I could reverse this, but I'm afraid things might break
   return a
 
 
 def tick(render=True, learn=False, speed=1):
   global frames
 
-  reward = -0.02
+  reward = 0.05#TODO Make this negative?
   for ball in balls:
     dx = ball.position[0] - pad_body.position[0]
     dy = ball.position[1] - pad_body.position[1]
