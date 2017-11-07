@@ -103,13 +103,13 @@ def get_state():
 def tick(render=True, learn=False, speed=1):
   global frames
 
-  reward = 0.05#TODO Make this negative?
+  reward = -0.02#TODO Make this negative?
   for ball in balls:
     dx = ball.position[0] - pad_body.position[0]
     dy = ball.position[1] - pad_body.position[1]
     if ball.position[1] < -BALL_RADIUS:
       print("SCORE: ", frames/TARGET_FPS)
-      return False if not learn else [get_state(), -25]
+      return False if not learn else [get_state(), -3]
       #Increase reward if ball is pretty close to the pad
     elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 3*BALL_RADIUS:
       reward += 1

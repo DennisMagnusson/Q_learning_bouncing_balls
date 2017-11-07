@@ -16,8 +16,8 @@ PAD_POS_BUCKETS = 1
 
 NUM_ACTIONS = 3#Left right nothing
 
-lr = 0.1
-discount = 0.8
+lr = 0.01
+discount = 0.08
 
 q_table = ()
 
@@ -53,14 +53,14 @@ def train(model, eps=1000, speed=1):
 def normalize(state):
   #Shitty code incoming
   l = []
-  
-  l.append(state.pop() / 640)
+  pad_x = state.pop()
+  l.append(pad_x / 640)
 
   for i in range(0, len(state), 4):
     l.append(state.pop() / 10)
     l.append(state.pop() / 10)
     l.append(state.pop() / 480)
-    l.append(state.pop() / 640)
+    l.append((state.pop() - pad_x) / 640)
 
   return l
 
@@ -134,15 +134,14 @@ def to_buckets(state):
 def create_model(input_size):
   model = Sequential()
   model.add(Dense(30, input_dim=input_size))
-  model.add(Activation("sigmoid"))
+  model.add(Activation("relu"))
   model.add(Dense(20))
-  model.add(Activation("sigmoid"))
-  model.add(Dense(10))
-  model.add(Activation("sigmoid"))
+  model.add(Activation("relu"))
   model.add(Dense(len(actions)))
+  model.add(Activation("linear"))
   
   #TODO set the learning rate
-  model.compile(loss='mse', optimizer=keras.optimizers.adam(lr=lr))#TODO Change to logloss?
+  model.compile(loss='mse', optimizer=keras.optimizers.rmsprop(lr=lr))#TODO Change to logloss?
 
   return model
 
