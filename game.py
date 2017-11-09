@@ -67,12 +67,14 @@ def move_left():
     pad_body.linearVelocity = (-VELOCITY, 0)
   else:
     do_nothing()
+    return -1
 
 def move_right():
   if pad_body.position[0] < WIDTH/PPM:
     pad_body.linearVelocity = (VELOCITY, 0)
   else:
     do_nothing()
+    return -1
 
 def do_nothing():
   pad_body.linearVelocity = (0, 0)
@@ -103,13 +105,16 @@ def get_state():
 def tick(render=True, learn=False, speed=1):
   global frames
 
-  reward = -0.02#TODO Make this negative?
+  #reward = -0.02#TODO Make this negative?
+  #reward = 0.002
+  reward = 0
+
   for ball in balls:
     dx = ball.position[0] - pad_body.position[0]
     dy = ball.position[1] - pad_body.position[1]
     if ball.position[1] < -BALL_RADIUS:
       print("SCORE: ", frames/TARGET_FPS)
-      return False if not learn else [get_state(), -3]
+      return False if not learn else [get_state(), -10]
       #Increase reward if ball is pretty close to the pad
     elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 3*BALL_RADIUS:
       reward += 1

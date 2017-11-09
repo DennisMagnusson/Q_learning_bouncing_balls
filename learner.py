@@ -1,5 +1,6 @@
 from __future__ import print_function, division
 import sys, math
+from random import random, randint
 import game
 from keras.models import Sequential
 from keras.layers import Dense, Activation
@@ -7,27 +8,22 @@ import keras.optimizers
 
 import numpy as np
 
-###Constants
-X_POS_BUCKETS = 4
-Y_POS_BUCKETS = 1
-X_VEL_BUCKETS = 1
-Y_VEL_BUCKETS = 3
-PAD_POS_BUCKETS = 1
-
 NUM_ACTIONS = 3#Left right nothing
 
-lr = 0.01
-discount = 0.08
+lr = 0.001
+discount = 0.8
+exploitation_rate = 0.7
+experiences = []
 
 q_table = ()
 
 actions = [game.move_left, game.move_right, game.do_nothing]
 
 def train(model, eps=1000, speed=1):
-  #TODO Input needs to be normalized FIXME XXX
-  #TODO How to normalize the velocity?
+  global exploitation_rate
 
   for e in range(eps):
+    exploitation_rate *= 1.01
     game.restart()
     prev_state, reward = game.tick(render=True, learn=True, speed=speed)
     action = 2#Do nothing on the first move.
@@ -41,11 +37,13 @@ def train(model, eps=1000, speed=1):
 
       action = reinforce(state, prev_state, action, reward)
 
-      if reward <= -1:#Game over, man
+      if reward <= -10:#Game over, man
         break
 
       #action = np.argmax(q_table[tuple(state)])
-      actions[action]()
+      if actions[action]() == -1:
+        reinforce(state, prev_state, action, -1)
+      
       prev_state = state
 
 #TODO Use the X pos in relation to the pad
@@ -61,6 +59,7 @@ def normalize(state):
     l.append(state.pop() / 10)
     l.append(state.pop() / 480)
     l.append((state.pop() - pad_x) / 640)
+    #l.append(state.pop() / 640)
 
   return l
 
@@ -76,14 +75,19 @@ def update_q(state, prev_state, action, reward):
 
 #I think this is the correct way of doing it
 def reinforce(state, prev_state, action, reward):
+  experiences.append([state, prev_state, action, reward])#Save
   expected_reward = model.predict(np.array([prev_state]))
   print(np.argmax([expected_reward]))
-  print(expected_reward[0])#TODO Check this
+  print(expected_reward[0])
   #action -= 1
-  expected_reward[0][action] = reward + discount * np.argmax(model.predict(np.array([state])))
+  #expected_reward[0][action] = reward + discount * np.argmax(model.predict(np.array([state])))
+  #TODO What the fuck is this shit? np.argmax? It returns an int
+  expected_reward[0][action] = reward + discount * np.max(model.predict(np.array([state])))
   print(expected_reward[0])
   
   model.fit(np.array([state]), expected_reward, epochs=1, verbose=0)
+  if random() > exploitation_rate:
+    return randint(0, 2)
   return np.argmax(expected_reward)
 
 def to_buckets(state):
@@ -133,14 +137,13 @@ def to_buckets(state):
 
 def create_model(input_size):
   model = Sequential()
-  model.add(Dense(30, input_dim=input_size))
-  model.add(Activation("relu"))
-  model.add(Dense(20))
-  model.add(Activation("relu"))
+  model.add(Dense(20, input_dim=input_size))
+  model.add(Activation("sigmoid"))
+  #model.add(Dense(20))
+  #model.add(Activation("relu"))
   model.add(Dense(len(actions)))
   model.add(Activation("linear"))
   
-  #TODO set the learning rate
   model.compile(loss='mse', optimizer=keras.optimizers.rmsprop(lr=lr))#TODO Change to logloss?
 
   return model
