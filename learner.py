@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 import sys, math
-from random import random, randint
+from random import random, randint, sample
 import game
 from keras.models import Sequential
 from keras.layers import Dense, Activation
@@ -13,7 +13,9 @@ NUM_ACTIONS = 3#Left right nothing
 lr = 0.001
 discount = 0.8
 exploitation_rate = 0.7
+batch_size = 10
 experiences = []
+experiences_y = []
 
 q_table = ()
 
@@ -26,6 +28,7 @@ def train(model, eps=1000, speed=1):
     exploitation_rate *= 1.01
     game.restart()
     prev_state, reward = game.tick(render=True, learn=True, speed=speed)
+    prev_state = normalize(prev_state)
     action = 2#Do nothing on the first move.
     while True:
       state, reward = game.tick(render=True, learn=True, speed=speed)
@@ -79,13 +82,22 @@ def reinforce(state, prev_state, action, reward):
   expected_reward = model.predict(np.array([prev_state]))
   print(np.argmax([expected_reward]))
   print(expected_reward[0])
-  #action -= 1
-  #expected_reward[0][action] = reward + discount * np.argmax(model.predict(np.array([state])))
-  #TODO What the fuck is this shit? np.argmax? It returns an int
   expected_reward[0][action] = reward + discount * np.max(model.predict(np.array([state])))
   print(expected_reward[0])
-  
-  model.fit(np.array([state]), expected_reward, epochs=1, verbose=0)
+  experiences_y.append(expected_reward)
+  #TODO Fit on memories
+  #TODO Sample batch_size memories and train on them.
+  bs = batch_size if batch_size < len(experiences) else len(experiences)
+  s = sample(range(len(experiences)), bs)
+  #x = np.array([np.array(experiences[i]) for i in s])[0].T
+  x = np.array([np.array([e for e in experiences[i]]) for i in s])
+  y = np.array([np.array(experiences_y[i]) for i in s])[0]
+  print(x)
+  print(y)
+  model.fit(x, y, epochs=1, verbose=1)#TODO Change verbosity to 0
+  #model.fit(np.array([state]), expected_reward, epochs=1, verbose=0)
+
+  #Return the next action
   if random() > exploitation_rate:
     return randint(0, 2)
   return np.argmax(expected_reward)
