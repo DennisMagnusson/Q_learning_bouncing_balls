@@ -6,3 +6,4 @@ Bouncin' some balls.
 * numpy
 * pygame
 * pybox2d
+* keras
