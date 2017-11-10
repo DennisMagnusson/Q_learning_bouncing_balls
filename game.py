@@ -46,9 +46,13 @@ pygame.key.set_repeat(10, 10)
 balls = []
 
 def draw():
+  screen.fill((0, 0, 0, 255))#Clear screen
   for ball in balls:
     draw_circle(ball, BALL_RADIUS)
   draw_circle(pad_body, PAD_RADIUS)
+
+  screen.blit(font.render(str(frames/TARGET_FPS), 1, (255, 255, 255)), (0, 0))
+  pygame.display.flip()
 
 def draw_circle(body, radius):
   pos = body.transform*body.position*PPM/2.0 #I have no fucking idea why everything needs to be divided by two
@@ -79,6 +83,15 @@ def move_right():
 def do_nothing():
   pad_body.linearVelocity = (0, 0)
 
+def get_input():
+  pad_body.linearVelocity = (0, 0)
+  for event in pygame.event.get():
+    if event.type == KEYDOWN:
+      if event.key == K_a:
+        move_left()
+      elif event.key == K_d:
+        move_right()
+
 def get_state():
   a = []
   for ball in balls:
@@ -90,8 +103,8 @@ def get_state():
   a.append(pad_body.position[0]*PPM)
   
   #Bubble sort balls after y position
-  for i in range(n_balls):
-    for j in range(i+1, n_balls):
+  for i in range(len(balls)):
+    for j in range(i+1, len(balls)):
       if balls[i].position[1] > balls[j].position[1]:
         for k in range(4):
           tmp = a[i*4 + k]
@@ -101,43 +114,12 @@ def get_state():
   #I could reverse this, but I'm afraid things might break
   return a
 
+def human_play():
+  while tick(render=True):#Totally makes sense
+    get_input()
 
-def tick(render=True, learn=False):
-  global frames
-
-  #reward = -0.02#TODO Make this negative?
-  #reward = 0.002
-  reward = 0
-
-  score = frames/TARGET_FPS
-  if score > 60:
-    print("Winner Winner Chicken Dinner")
-    return False if not learn else [get_state(), 100]
-
-  for ball in balls:
-    dx = ball.position[0] - pad_body.position[0]
-    dy = ball.position[1] - pad_body.position[1]
-    if ball.position[1] < -BALL_RADIUS:
-      print("SCORE: ", frames/TARGET_FPS)
-      return False if not learn else [get_state(), -10]
-      #Increase reward if ball is pretty close to the pad
-    elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 3*BALL_RADIUS:
-      reward += 1
-
-  frames += 1
-
-  if render:
-    screen.fill((0, 0, 0, 255))
-    draw()
-    screen.blit(font.render(str(frames/TARGET_FPS), 1, (255, 255, 255)), (0, 0))
-    pygame.display.flip()
-    clock.tick(TARGET_FPS)
-
-  world.Step(TIME_STEP, 10, 10)
-
-  if learn:
-    return [get_state(), reward]
-  return True
+  restart()
+  human_play()
 
 def init_game(number_of_balls=2):
   global n_balls
@@ -161,22 +143,35 @@ def restart():
   world.Step(TIME_STEP, 10, 10)
   pad_body.linearVelocity[0] = 0
 
+def tick(render=True, learn=False):
+  global frames
 
-def human_play():
-  while tick(render=True):#Totally makes sense
-    get_input()
+  reward = 0
+  score = frames/TARGET_FPS
+  if score > 60:#Win
+    print("Winner Winner Chicken Dinner")
+    return False if not learn else [get_state(), 100]
 
-  restart()
-  human_play()
+  for ball in balls:
+    dx = ball.position[0] - pad_body.position[0]
+    dy = ball.position[1] - pad_body.position[1]
 
-def get_input():
-  pad_body.linearVelocity = (0, 0)
-  for event in pygame.event.get():
-    if event.type == KEYDOWN:
-      if event.key == K_a:
-        move_left()
-      elif event.key == K_d:
-        move_right()
+    if ball.position[1] < -BALL_RADIUS:#Game over
+      print("SCORE: ", frames/TARGET_FPS)
+      return False if not learn else [get_state(), -10]
+
+    elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 2*BALL_RADIUS:
+      reward += 1#Increase reward if almost touching
+
+  frames += 1
+
+  if render:
+    draw()
+    clock.tick(TARGET_FPS)
+
+  world.Step(TIME_STEP, 10, 10)
+
+  return [get_state(), reward] if learn else True
 
 if __name__ == "__main__":
   init_game(number_of_balls=int(sys.argv[1]))
