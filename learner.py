@@ -33,11 +33,6 @@ def train(model, eps=1000, speed=1):
     while True:
       state, reward = game.tick(render=True, learn=True, speed=speed)
       state = normalize(state)
-      #if action == 2:#TODO Update this in some way
-        #reward -= 0.91
-      #else:
-      #reward -= 0.75
-
       action = reinforce(state, prev_state, action, reward)
 
       if reward <= -10:#Game over, man
@@ -61,8 +56,7 @@ def normalize(state):
     l.append(state.pop() / 10)
     l.append(state.pop() / 10)
     l.append(state.pop() / 480)
-    l.append((state.pop() - pad_x) / 640)
-    #l.append(state.pop() / 640)
+    l.append(state.pop() / 640)
 
   return l
 
