@@ -11,9 +11,9 @@ import numpy as np
 NUM_ACTIONS = 3#Left right nothing
 
 lr = 0.001
-discount = 0.8
-exploitation_rate = 0.7
-batch_size = 10
+discount = 0.03#Lower is usually better
+exploitation_rate = 0.8
+batch_size = 100
 experiences = []
 experiences_y = []
 
@@ -81,10 +81,10 @@ def reinforce(state, prev_state, action, reward):
   #experiences.append([state, prev_state, action, reward])#Save
   experiences.append([state])
   expected_reward = model.predict(np.array([prev_state]))
-  print(np.argmax([expected_reward]))
-  print(expected_reward[0])
+  #print(np.argmax([expected_reward]))
+  #print(expected_reward[0])
   expected_reward[0][action] = reward + discount * np.max(model.predict(np.array([state])))
-  print(expected_reward[0])
+  #print(expected_reward[0])
 
   experiences_y.append(expected_reward)
 
@@ -101,7 +101,7 @@ def reinforce(state, prev_state, action, reward):
   y = np.array(y[0])
   #x = np.array([np.array([e for e in experiences[i]]) for i in s])
   #y = np.array([np.array(experiences_y[i]) for i in s])[0]
-  model.fit(x, y, epochs=1, verbose=1)#TODO Change verbosity to 0
+  model.fit(x, y, epochs=1, verbose=0)#TODO Change verbosity to 0
   #model.fit(np.array([state]), expected_reward, epochs=1, verbose=0)
 
   #Return the next action
