@@ -102,12 +102,17 @@ def get_state():
   return a
 
 
-def tick(render=True, learn=False, speed=1):
+def tick(render=True, learn=False):
   global frames
 
   #reward = -0.02#TODO Make this negative?
   #reward = 0.002
   reward = 0
+
+  score = frames/TARGET_FPS
+  if score > 60:
+    print("Winner Winner Chicken Dinner")
+    return False if not learn else [get_state(), 100]
 
   for ball in balls:
     dx = ball.position[0] - pad_body.position[0]
@@ -119,17 +124,17 @@ def tick(render=True, learn=False, speed=1):
     elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 3*BALL_RADIUS:
       reward += 1
 
-  frames += speed
+  frames += 1
 
   if render:
     screen.fill((0, 0, 0, 255))
     draw()
     screen.blit(font.render(str(frames/TARGET_FPS), 1, (255, 255, 255)), (0, 0))
     pygame.display.flip()
+    clock.tick(TARGET_FPS)
 
-  world.Step(speed* TIME_STEP, 10, 10)
+  world.Step(TIME_STEP, 10, 10)
 
-  clock.tick(TARGET_FPS)
   if learn:
     return [get_state(), reward]
   return True

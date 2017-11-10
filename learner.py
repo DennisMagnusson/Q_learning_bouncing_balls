@@ -25,17 +25,19 @@ def train(model, eps=1000, speed=1):
   global exploitation_rate
 
   for e in range(eps):
+    frames = 0
     exploitation_rate *= 1.01
     game.restart()
-    prev_state, reward = game.tick(render=True, learn=True, speed=speed)
+    prev_state, reward = game.tick(render=True, learn=True)
     prev_state = normalize(prev_state)
     action = 2#Do nothing on the first move.
     while True:
-      state, reward = game.tick(render=True, learn=True, speed=speed)
+      render = frames % speed == 0
+      state, reward = game.tick(render=render, learn=True)
       state = normalize(state)
       action = reinforce(state, prev_state, action, reward)
 
-      if reward <= -10:#Game over, man
+      if reward <= -10 or reward == 100:#Game over, man
         break
 
       #action = np.argmax(q_table[tuple(state)])
@@ -43,6 +45,7 @@ def train(model, eps=1000, speed=1):
         reinforce(state, prev_state, action, -1)
       
       prev_state = state
+      frames += 1
 
 #TODO Use the X pos in relation to the pad
 #TODO Maybe try to keep values between -1 and 1 FIXME XXX
