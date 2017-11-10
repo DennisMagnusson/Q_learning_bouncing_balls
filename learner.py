@@ -78,22 +78,29 @@ def update_q(state, prev_state, action, reward):
 
 #I think this is the correct way of doing it
 def reinforce(state, prev_state, action, reward):
-  experiences.append([state, prev_state, action, reward])#Save
+  #experiences.append([state, prev_state, action, reward])#Save
+  experiences.append([state])
   expected_reward = model.predict(np.array([prev_state]))
   print(np.argmax([expected_reward]))
   print(expected_reward[0])
   expected_reward[0][action] = reward + discount * np.max(model.predict(np.array([state])))
   print(expected_reward[0])
+
   experiences_y.append(expected_reward)
-  #TODO Fit on memories
-  #TODO Sample batch_size memories and train on them.
+
   bs = batch_size if batch_size < len(experiences) else len(experiences)
   s = sample(range(len(experiences)), bs)
   #x = np.array([np.array(experiences[i]) for i in s])[0].T
-  x = np.array([np.array([e for e in experiences[i]]) for i in s])
-  y = np.array([np.array(experiences_y[i]) for i in s])[0]
-  print(x)
-  print(y)
+  x = []
+  y = []
+  for i in s:
+    x.append(experiences[i])
+    y.append(experiences_y[i])
+
+  x = np.array(x[0])
+  y = np.array(y[0])
+  #x = np.array([np.array([e for e in experiences[i]]) for i in s])
+  #y = np.array([np.array(experiences_y[i]) for i in s])[0]
   model.fit(x, y, epochs=1, verbose=1)#TODO Change verbosity to 0
   #model.fit(np.array([state]), expected_reward, epochs=1, verbose=0)
 
