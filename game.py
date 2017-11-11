@@ -158,7 +158,7 @@ def tick(render=True, learn=False):
     dy = ball.position[1] - pad_body.position[1]
 
     if ball.position[1] < -BALL_RADIUS:#Game over
-      print("SCORE: ", frames/TARGET_FPS)
+      #print("SCORE: ", frames/TARGET_FPS)
       return False if not learn else [get_state(), -1, frames/TARGET_FPS]
 
     elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 2*BALL_RADIUS:

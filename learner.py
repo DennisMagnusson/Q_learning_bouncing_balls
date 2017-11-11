@@ -54,10 +54,12 @@ def train(model, eps=1000, speed=1):
         scores.append(score)
         break
 
-
-    print("loss: ", sum(losses) / len(losses))
+    avg_loss = sum(losses) / len(losses)
+    avg_score = sum(scores) / len(scores)
+    print("Ep:{:4}, Score:{:2}, loss: {:.5f}, avg score: {:.2f}".format(e, scores[len(scores)-1], avg_loss, avg_score))
     losses = []
-    print("avg score: ", sum(scores) / len(scores))#Starts dropping after a while. Why?
+    #print("epoch: ", e, "score", scores[len(scores)-1], "loss: ", sum(losses) / len(losses), "avg score: ", sum(scores) / len(scores))
+    #print("avg score: ", sum(scores) / len(scores))#Starts dropping after a while. Why?
 
 #I think this is the correct way of doing it
 #def reinforce(state, prev_state, action, reward):
@@ -75,11 +77,7 @@ def reinforce():
   x = np.array([x[0]])
   y = np.array([y[0]])
   loss = np.average(np.array(model.fit(x, y, epochs=1, verbose=0).history['loss']))
-  if loss > 1:
-    print(loss)
   losses.append(loss)
-  #print(loss, end="\r")
-
   
 def get_action(state):
   if random() > exploitation_rate:
