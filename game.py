@@ -146,11 +146,12 @@ def restart():
 def tick(render=True, learn=False):
   global frames
 
-  reward = 0
+  #reward = 0
+  reward = 0.1
   score = frames/TARGET_FPS
   if score > 60:#Win
     print("Winner Winner Chicken Dinner")
-    return False if not learn else [get_state(), 100]
+    return False if not learn else [get_state(), 100, 60]
 
   for ball in balls:
     dx = ball.position[0] - pad_body.position[0]
@@ -158,7 +159,7 @@ def tick(render=True, learn=False):
 
     if ball.position[1] < -BALL_RADIUS:#Game over
       print("SCORE: ", frames/TARGET_FPS)
-      return False if not learn else [get_state(), -10]
+      return False if not learn else [get_state(), -1, frames/TARGET_FPS]
 
     elif math.sqrt((dx**2 + dy**2)) < PAD_RADIUS + 2*BALL_RADIUS:
       reward += 1#Increase reward if almost touching
@@ -171,7 +172,7 @@ def tick(render=True, learn=False):
 
   world.Step(TIME_STEP, 10, 10)
 
-  return [get_state(), reward] if learn else True
+  return [get_state(), reward, -1] if learn else True
 
 if __name__ == "__main__":
   init_game(number_of_balls=int(sys.argv[1]))

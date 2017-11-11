@@ -12,91 +12,103 @@ NUM_ACTIONS = 3#Left right nothing
 
 #Hyperparams
 lr = 0.001
-discount = 0.99
+discount = 0.9
 exploitation_rate = 0.7
-batch_size = 100
+#batch_size = 25
+batch_size = 1
 
-experiences = []
-experiences_y = []
+memories = []
+losses = []
+scores = []
 
 actions = [game.move_left, game.move_right, game.do_nothing]
 
 def train(model, eps=1000, speed=1):
-  global exploitation_rate
+  global exploitation_rate, losses
 
   for e in range(eps):
     frames = 0
-    exploitation_rate = 1.0 - 0.3*(1.1**-(e/10))
+    exploitation_rate = 1.0 - 0.3*(1.3**-(e/10))
+
     game.restart()
-    prev_state, reward = game.tick(render=True, learn=True)
+    prev_state, reward, score = game.tick(render=True, learn=True)
     prev_state = normalize(prev_state)
-    action = 2#Do nothing on the first move.
+    state = prev_state
+
     while True:
       render = frames % speed == 0
-      state, reward = game.tick(render=render, learn=True)
+      action = get_action(state)
+      actions[action]()
+      state, reward, score = game.tick(render=render, learn=True)
       state = normalize(state)
-      action = reinforce(state, prev_state, action, reward)
 
-      if reward <= -10 or reward == 100:#Game over, man
-        break
-
-      if actions[action]() == -1:#Punish pushing against wall
-        reinforce(state, prev_state, action, -1)
+      memories.append([state, prev_state, action, reward])#Remember
+      reinforce()
       
       prev_state = state
       frames += 1
+
+      if score != -1:
+        if reward > 0:
+          print("Game solved after", e, "epochs")
+        scores.append(score)
+        break
+
+
+    print("loss: ", sum(losses) / len(losses))
+    losses = []
+    print("avg score: ", sum(scores) / len(scores))#Starts dropping after a while. Why?
+
+#I think this is the correct way of doing it
+#def reinforce(state, prev_state, action, reward):
+def reinforce():
+  bs = batch_size if batch_size < len(memories) else len(memories)
+  s = sample(range(len(memories)), bs)
+  x = []
+  y = []
+  for i in s:
+    x.append(memories[i][0])
+    reward = model.predict(np.array([memories[i][0]]))[0]
+    reward[memories[i][2]] = memories[i][3] + discount * np.max(reward)
+    y.append(reward)
+
+  x = np.array([x[0]])
+  y = np.array([y[0]])
+  loss = np.average(np.array(model.fit(x, y, epochs=1, verbose=0).history['loss']))
+  if loss > 1:
+    print(loss)
+  losses.append(loss)
+  #print(loss, end="\r")
+
+  
+def get_action(state):
+  if random() > exploitation_rate:
+    return randint(0, 2)
+
+  expected_reward = model.predict(np.array([state]))
+  return np.argmax(expected_reward)
 
 def normalize(state):
   #Shitty code incoming
   l = []
   pad_x = state.pop()
-  l.append(pad_x / 640)
+  l.append(pad_x / game.WIDTH)
 
   for i in range(0, len(state), 4):
-    l.append(state.pop() / 10)
-    l.append(state.pop() / 10)
+    l.append(state.pop() / 20 + 0.5)
+    l.append(state.pop() / 20 + 0.5)
     l.append(state.pop() / game.HEIGHT)
     l.append(state.pop() / game.WIDTH)
 
   return l
 
-#I think this is the correct way of doing it
-def reinforce(state, prev_state, action, reward):
-  experiences.append([state])
-  expected_reward = model.predict(np.array([prev_state]))
-  print(expected_reward[0])
-  expected_reward[0][action] = reward + discount * np.max(model.predict(np.array([state])))
-  print(expected_reward[0])
-
-  experiences_y.append(expected_reward)
-
-  bs = batch_size if batch_size < len(experiences) else len(experiences)
-  s = sample(range(len(experiences)), bs)
-  #x = np.array([np.array(experiences[i]) for i in s])[0].T
-  x = []
-  y = []
-  for i in s:
-    x.append(experiences[i])
-    y.append(experiences_y[i])
-
-  x = np.array(x[0])
-  y = np.array(y[0])
-  loss = np.average(np.array(model.fit(x, y, epochs=1, verbose=0).history['loss']))
-  print(loss)
-
-  #Return the next action
-  if random() > exploitation_rate:
-    return randint(0, 2)
-  return np.argmax(expected_reward)
 
 #The model is trained with the expected rewards and the actual reward of the action + the next (current) reward times the discount. so expected_reward = model.predict(state)
 #expected_reward[action] += reward * discount , I think
 def create_model(input_size):
   model = Sequential()
   model.add(Dense(40, input_dim=input_size))
-  model.add(Activation("sigmoid"))
-  model.add(Dense(20))
-  model.add(Activation("sigmoid"))
+  model.add(Activation("relu"))
   model.add(Dense(len(actions)))
   model.add(Activation("linear"))
   
