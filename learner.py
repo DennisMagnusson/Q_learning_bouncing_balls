@@ -12,10 +12,9 @@ NUM_ACTIONS = 3#Left right nothing
 
 #Hyperparams
 lr = 0.001
-discount = 0.9
-exploitation_rate = 0.7
-#batch_size = 25
-batch_size = 1
+discount = 0.5
+exploitation_rate = 0.8
+batch_size = 50
 
 memories = []
 losses = []
@@ -28,7 +27,7 @@ def train(model, eps=1000, speed=1):
 
   for e in range(eps):
     frames = 0
-    exploitation_rate = 1.0 - 0.3*(1.3**-(e/10))
+    exploitation_rate = 1.0 - 0.2*(1.25**-(e/10))
 
     game.restart()
     prev_state, reward, score = game.tick(render=True, learn=True)
@@ -57,9 +56,7 @@ def train(model, eps=1000, speed=1):
     avg_loss = sum(losses) / len(losses)
     avg_score = sum(scores) / len(scores)
     print("Ep:{:4}, Score:{:2}, loss: {:.5f}, avg score: {:.2f}".format(e, scores[len(scores)-1], avg_loss, avg_score))
-    losses = []
-    #print("epoch: ", e, "score", scores[len(scores)-1], "loss: ", sum(losses) / len(losses), "avg score: ", sum(scores) / len(scores))
-    #print("avg score: ", sum(scores) / len(scores))#Starts dropping after a while. Why?
+    #losses = []
 
 #I think this is the correct way of doing it
 #def reinforce(state, prev_state, action, reward):
@@ -110,7 +107,7 @@ def create_model(input_size):
   model.add(Dense(len(actions)))
   model.add(Activation("linear"))
   
-  model.compile(loss='mse', optimizer=keras.optimizers.rmsprop(lr=lr))
+  model.compile(loss='mse', optimizer=keras.optimizers.adam(lr=lr))
 
   return model
 

@@ -146,12 +146,11 @@ def restart():
 def tick(render=True, learn=False):
   global frames
 
-  #reward = 0
-  reward = 0.1
+  reward = -0.1
   score = frames/TARGET_FPS
   if score > 60:#Win
     print("Winner Winner Chicken Dinner")
-    return False if not learn else [get_state(), 100, 60]
+    return False if not learn else [get_state(), 1, 60]
 
   for ball in balls:
     dx = ball.position[0] - pad_body.position[0]
